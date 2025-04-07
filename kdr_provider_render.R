@@ -8,6 +8,13 @@ x <- "APP"
 y <- "SS54"
 
 ##Running kdr reports for those providers who meet the specified criteria
+all <- data %>%
+  filter(service == "ON") %>%
+  filter(type == x ) %>%
+  filter(varname == y ) %>%
+  group_by(name,npi) %>%
+  summarise(tbscore=sum(top_box)/n()*100,n=n())
+
 
 runners <- data %>%
   filter(service == "ON") %>%
@@ -67,7 +74,7 @@ reports_02<-
   )
 
 reports_02<-reports_02%>%
-  slice (36:38)
+  slice (1:p)
 
 pwalk(reports_02,quarto_render)
 
@@ -75,7 +82,7 @@ pwalk(reports_02,quarto_render)
 ##Running kdr for those providers with perfect ltr.
 
 perfectltr <- data%>%
-  filter(provider_type == x )%>%
+  filter(type == x )%>%
   filter(varname == y ) %>%
   group_by(name,npi) %>%
   summarise(tbscore=sum(top_box)/n()*100,n=n()) %>% #calculate topbox
@@ -99,7 +106,35 @@ reports_03<-
   )
 
 reports_03<-reports_03%>%
-  slice(35)
+  slice(1:r)
 
 pwalk(reports_03,quarto_render)
 
+problems <- data %>%
+  filter(type == x ) %>%
+  filter(varname == y ) %>%
+  group_by(name,npi) %>%
+  summarise(tbscore=sum(top_box)/n()*100,n=n()) %>% #calculate topbox
+  filter(npi %in% c("1497586572","1801662739","1164724670","1063796100","1477158293"))
+
+q<- nrow(problems)
+
+npis4 <- problems %>%
+  pull(npi) %>%
+  as.character()
+
+names4 <- problems %>%
+  pull(name) %>%
+  as.character()
+
+reports_04<-
+  tibble(
+    input="kdr_provider_perfectltr.qmd",
+    output_file = str_glue("{names4}.html"),
+    execute_params=map(npis4,~list(npi=.))
+  )
+
+reports_04<-reports_04%>%
+  slice(1:q)
+
+pwalk(reports_04,quarto_render)
